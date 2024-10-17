@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:io';
@@ -57,13 +56,9 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   List<PathData> paths = [];
-
   int? selectedPathIndex;
-
   int? selectedPointIndex;
-
   int? selectedControlPointIndex;
-
   bool isDrawing = true;
   bool isPenActive = true;
   Offset? currentPoint;
@@ -72,7 +67,6 @@ class _MyAppState extends State<MyApp> {
   Offset? startPoint;
   List<List<PathData>> undoStack = [];
   List<List<PathData>> redoStack = [];
-
   List<SvgPicture> importedSvgs = [];
 
   @override
@@ -140,7 +134,7 @@ class _MyAppState extends State<MyApp> {
       if (pathData.points.isEmpty) continue;
 
       String pathSvg = '''
-  <path d="${pathData.toSvgPath()}" stroke="${isDrawing ? 'red' : 'black'}" stroke-width="2" fill="none" />
+  <path d="${pathData.toSvgPath()}" stroke="black" stroke-width="2" fill="none" />
 ''';
       svgContent += pathSvg;
     }
@@ -212,7 +206,6 @@ class _MyAppState extends State<MyApp> {
             isPenActive = true;
           });
         },
-
         ) ,
         appBar: AppBar(
           title: const Text('Flutter Desktop Drawing'),
@@ -334,15 +327,6 @@ class _MyAppState extends State<MyApp> {
                   });
                 }
               }
-            },
-            onPanEnd: (_) {
-              setState(() {
-                selectedPathIndex = null;
-                selectedPointIndex = null;
-                selectedControlPointIndex = null;
-                tempControlPoint = null;
-                startPoint = null;
-              });
             },
             onLongPressStart: (details) {
               if (isDrawing &&
