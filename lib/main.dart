@@ -20,13 +20,11 @@ class PathData {
 
   PathData copy() {
     PathData newPath = PathData();
-    newPath.points = List.from(this.points);
-    newPath.controlPointsIn = this
-        .controlPointsIn
+    newPath.points = List.from(points);
+    newPath.controlPointsIn = controlPointsIn
         .map((cp) => cp != null ? Offset(cp.dx, cp.dy) : null)
         .toList();
-    newPath.controlPointsOut = this
-        .controlPointsOut
+    newPath.controlPointsOut = controlPointsOut
         .map((cp) => cp != null ? Offset(cp.dx, cp.dy) : null)
         .toList();
     return newPath;
@@ -67,7 +65,7 @@ class _MyAppState extends State<MyApp> {
   int? selectedControlPointIndex;
 
   bool isDrawing = true;
-
+  bool isPenActive = true;
   Offset? currentPoint;
   int? adjustingControlPointIndex;
   Offset? tempControlPoint;
@@ -166,7 +164,6 @@ class _MyAppState extends State<MyApp> {
       try {
         final file = File(outputFile);
         await file.writeAsString(svgString);
-
       } catch (e) {
         print(e);
       }
@@ -197,8 +194,8 @@ class _MyAppState extends State<MyApp> {
         setState(() {
           importedSvgs.add(svgWidget);
         });
-
       } catch (e) {
+        print(e);
       }
     }
   }
@@ -208,6 +205,15 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Flutter Desktop Drawing',
       home: Scaffold(
+        floatingActionButton:FloatingActionButton(
+          child: Icon(isPenActive ? Icons.brush : Icons.edit),
+          onPressed: () {
+          setState(() {
+            isPenActive = true;
+          });
+        },
+
+        ) ,
         appBar: AppBar(
           title: const Text('Flutter Desktop Drawing'),
           actions: [
@@ -251,7 +257,10 @@ class _MyAppState extends State<MyApp> {
         ),
         body: MouseRegion(
           onHover: (details) {
-            if (isDrawing && paths.isNotEmpty && paths.last.points.isNotEmpty) {
+            if (isDrawing &&
+                isPenActive &&
+                paths.isNotEmpty &&
+                paths.last.points.isNotEmpty) {
               setState(() {
                 currentPoint = details.localPosition;
               });
@@ -280,31 +289,48 @@ class _MyAppState extends State<MyApp> {
                 if (selectedPointIndex != null) {
                   setState(() {
                     pushToUndoStack();
-                    paths[selectedPathIndex!].points[selectedPointIndex!] += details.delta;
+                    paths[selectedPathIndex!].points[selectedPointIndex!] +=
+                        details.delta;
 
                     Offset delta = details.delta;
 
-                    if (paths[selectedPathIndex!].controlPointsIn[selectedPointIndex!] != null) {
-                      paths[selectedPathIndex!].controlPointsIn[selectedPointIndex!] =
-                          paths[selectedPathIndex!].controlPointsIn[selectedPointIndex!]! + delta;
+                    if (paths[selectedPathIndex!]
+                            .controlPointsIn[selectedPointIndex!] !=
+                        null) {
+                      paths[selectedPathIndex!]
+                              .controlPointsIn[selectedPointIndex!] =
+                          paths[selectedPathIndex!]
+                                  .controlPointsIn[selectedPointIndex!]! +
+                              delta;
                     }
-                    if (paths[selectedPathIndex!].controlPointsOut[selectedPointIndex!] != null) {
-                      paths[selectedPathIndex!].controlPointsOut[selectedPointIndex!] =
-                          paths[selectedPathIndex!].controlPointsOut[selectedPointIndex!]! + delta;
+                    if (paths[selectedPathIndex!]
+                            .controlPointsOut[selectedPointIndex!] !=
+                        null) {
+                      paths[selectedPathIndex!]
+                              .controlPointsOut[selectedPointIndex!] =
+                          paths[selectedPathIndex!]
+                                  .controlPointsOut[selectedPointIndex!]! +
+                              delta;
                     }
                   });
                 } else if (selectedControlPointIndex != null) {
                   setState(() {
                     pushToUndoStack();
 
-                    Offset anchorPoint = paths[selectedPathIndex!].points[selectedControlPointIndex!];
-                    Offset controlPoint = paths[selectedPathIndex!].controlPointsOut[selectedControlPointIndex!]!;
+                    Offset anchorPoint = paths[selectedPathIndex!]
+                        .points[selectedControlPointIndex!];
+                    Offset controlPoint = paths[selectedPathIndex!]
+                        .controlPointsOut[selectedControlPointIndex!]!;
                     Offset newControlPoint = controlPoint + details.delta;
 
                     Offset vector = newControlPoint - anchorPoint;
 
-                    paths[selectedPathIndex!].controlPointsOut[selectedControlPointIndex!] = newControlPoint;
-                    paths[selectedPathIndex!].controlPointsIn[selectedControlPointIndex!] = anchorPoint - vector;
+                    paths[selectedPathIndex!]
+                            .controlPointsOut[selectedControlPointIndex!] =
+                        newControlPoint;
+                    paths[selectedPathIndex!]
+                            .controlPointsIn[selectedControlPointIndex!] =
+                        anchorPoint - vector;
                   });
                 }
               }
@@ -319,7 +345,9 @@ class _MyAppState extends State<MyApp> {
               });
             },
             onLongPressStart: (details) {
-              if (isDrawing && paths.isNotEmpty && paths.last.points.isNotEmpty) {
+              if (isDrawing &&
+                  paths.isNotEmpty &&
+                  paths.last.points.isNotEmpty) {
                 setState(() {
                   pushToUndoStack();
 
@@ -337,12 +365,16 @@ class _MyAppState extends State<MyApp> {
 
                   PathData currentPath = paths.last;
                   int lastPointIndex = currentPath.points.length - 1;
-                  currentPath.controlPointsOut[lastPointIndex] = tempControlPoint;
+                  currentPath.controlPointsOut[lastPointIndex] =
+                      tempControlPoint;
                 });
               }
             },
             onLongPressEnd: (details) {
-              if (isDrawing && paths.isNotEmpty && startPoint != null && tempControlPoint != null) {
+              if (isDrawing &&
+                  paths.isNotEmpty &&
+                  startPoint != null &&
+                  tempControlPoint != null) {
                 setState(() {
                   startPoint = null;
                   tempControlPoint = null;
@@ -353,6 +385,7 @@ class _MyAppState extends State<MyApp> {
               setState(() {
                 isDrawing = false;
                 currentPoint = null;
+                isPenActive = false;
               });
             },
             child: Container(
@@ -364,7 +397,6 @@ class _MyAppState extends State<MyApp> {
                   ...importedSvgs
                       .map((svg) => Positioned.fill(child: svg))
                       .toList(),
-
                   CustomPaint(
                     painter: PathPainter(
                       paths: paths,
@@ -411,7 +443,7 @@ class _MyAppState extends State<MyApp> {
       }
     }
 
-    if (isDrawing && paths.isNotEmpty) {
+    if (isDrawing && isPenActive && paths.isNotEmpty) {
       setState(() {
         pushToUndoStack();
         PathData currentPath = paths.last;
